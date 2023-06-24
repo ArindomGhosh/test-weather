@@ -1,8 +1,8 @@
 package com.example.testapplication.data.di
 
-import com.example.testapplication.core.WeatherCoroutineDispatcher
-import com.example.testapplication.core.WeatherCoroutineScopes
-import com.example.testapplication.core.coroutineModule
+import com.example.testapplication.core.di.WeatherCoroutineDispatcher
+import com.example.testapplication.core.di.WeatherCoroutineScopes
+import com.example.testapplication.core.di.coreModule
 import com.example.testapplication.data.repo.WeatherRepo
 import com.example.testapplication.data.repo.WeatherRepoImpl
 import com.example.testapplication.data.services.WeatherService
@@ -11,7 +11,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val datamodule = module {
-    includes(coroutineModule)
+    includes(coreModule)
 
     single<WeatherService> {
         WeatherServiceImpl()

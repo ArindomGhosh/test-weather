@@ -1,7 +1,10 @@
 package com.example.testapplication.presentation
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.testapplication.core.network.NetworkMonitor
+import com.example.testapplication.core.network.asStateFlow
 import com.example.testapplication.domain.DomainWrapper
 import com.example.testapplication.domain.GetWeatherInfoInParalleUseCase
 import com.example.testapplication.domain.GetWeatherInfoInSequenceUseCase
@@ -17,82 +20,95 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
+@Stable
 data class WeatherUIState(
 //    adding counter to show how often ui Updated for sequence and parallel
     val count: Int = 0,
     val isLoading: Boolean = false,
     val weatherList: List<WeatherEntity> = emptyList(),
-    val isError: Boolean = false
+    val isError: Boolean = false,
+    val isOnline: Boolean = true
 )
 
 
 class WeatherViewmodel(
     private val getWeatherInfoSequenceUseCase: GetWeatherInfoInSequenceUseCase,
-    private val getWeatherInfoInParalleUseCase: GetWeatherInfoInParalleUseCase
+    private val getWeatherInfoInParalleUseCase: GetWeatherInfoInParalleUseCase,
+    private val networkMonitor: NetworkMonitor
 ) : ViewModel() {
     private val _uiStateFlow: MutableStateFlow<WeatherUIState> = MutableStateFlow<WeatherUIState>(
         WeatherUIState()
     )
     val uiStateFlow: StateFlow<WeatherUIState> = _uiStateFlow.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            networkMonitor.asStateFlow(viewModelScope)
+                .collect { isConnected ->
+                    _uiStateFlow.update {
+                        it.copy(
+                            isOnline = isConnected
+                        )
+                    }
+                }
+        }
+    }
 
     fun getWeatherInSequence(places: List<String>) {
         viewModelScope.launch {
-            getWeatherInfoSequenceUseCase.invoke(places)
-                .onStart {
-                    _uiStateFlow.update {
-                        it.copy(isLoading = true)
-                    }
+            getWeatherInfoSequenceUseCase.invoke(places).onStart {
+                _uiStateFlow.update {
+                    it.copy(isLoading = true)
                 }
-                .onEach { domainWrapper ->
-                    when (domainWrapper) {
-                        is DomainWrapper.Failure -> _uiStateFlow.update {
-                            it.copy(isError = true, isLoading = false)
-                        }
-
-                        is DomainWrapper.Success -> _uiStateFlow.update {
-                            it.copy(
-                                weatherList = it.weatherList + domainWrapper.entity,
-                                isLoading = false,
-                                count = it.count + 1
-                            )
-                        }
-                    }
-
-                }
-                .catch {
-                    _uiStateFlow.update {
+            }.onEach { domainWrapper ->
+                when (domainWrapper) {
+                    is DomainWrapper.Failure -> _uiStateFlow.update {
                         it.copy(isError = true, isLoading = false)
                     }
-                }.collect()
+
+                    is DomainWrapper.Success -> _uiStateFlow.update {
+                        it.copy(
+                            weatherList = it.weatherList + domainWrapper.entity,
+                            isLoading = false,
+                            count = it.count + 1
+                        )
+                    }
+                }
+
+            }.catch {
+                _uiStateFlow.update {
+                    it.copy(isError = true, isLoading = false)
+                }
+            }.collect()
         }
     }
 
 
-    fun getWeatherInParallel(places:List<String>) {
+    fun getWeatherInParallel(places: List<String>) {
         viewModelScope.launch {
-            getWeatherInfoInParalleUseCase.invoke(places)
-                .onStart {
-                    _uiStateFlow.update {
-                        it.copy(isLoading = true)
-                    }
+            getWeatherInfoInParalleUseCase.invoke(places).onStart {
+                _uiStateFlow.update {
+                    it.copy(isLoading = true)
                 }
-                .onEach { domainWrapper ->
-                    when (domainWrapper) {
-                        is DomainWrapper.Failure -> _uiStateFlow.update {
-                            it.copy(isError = true, isLoading = false)
-                        }
-
-                        is DomainWrapper.Success -> _uiStateFlow.update {
-                            it.copy(weatherList = domainWrapper.entity, isLoading = false, count = it.count+1)
-                        }
-                    }
-                }
-                .catch {
-                    _uiStateFlow.update {
+            }.onEach { domainWrapper ->
+                when (domainWrapper) {
+                    is DomainWrapper.Failure -> _uiStateFlow.update {
                         it.copy(isError = true, isLoading = false)
                     }
-                }.collect()
+
+                    is DomainWrapper.Success -> _uiStateFlow.update {
+                        it.copy(
+                            weatherList = domainWrapper.entity,
+                            isLoading = false,
+                            count = it.count + 1
+                        )
+                    }
+                }
+            }.catch {
+                _uiStateFlow.update {
+                    it.copy(isError = true, isLoading = false)
+                }
+            }.collect()
         }
     }
 

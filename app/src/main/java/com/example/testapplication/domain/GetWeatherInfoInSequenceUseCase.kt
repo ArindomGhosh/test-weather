@@ -2,14 +2,17 @@ package com.example.testapplication.domain
 
 import com.example.testapplication.data.repo.ApiResponse
 import com.example.testapplication.data.repo.WeatherRepo
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 class GetWeatherInfoInSequenceUseCase(
-    private val weatherRepo: WeatherRepo
+    private val weatherRepo: WeatherRepo,
+    private val defaultDispatcher: CoroutineDispatcher
 ) {
     suspend operator fun invoke(places: List<String>): Flow<DomainWrapper<out WeatherEntity>> {
         return places.asFlow()
@@ -30,6 +33,6 @@ class GetWeatherInfoInSequenceUseCase(
                         apiRes.response.toWeatherEntity()
                     )
                 }
-            }
+            }.flowOn(defaultDispatcher)
     }
 }

@@ -7,6 +7,7 @@ import com.example.testapplication.data.repo.ApiResponse
 import com.example.testapplication.data.repo.WeatherRepo
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Before
@@ -16,10 +17,12 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
-import kotlin.system.measureTimeMillis
 
 @RunWith(MockitoJUnitRunner::class)
 class GetWeatherInfoParallelUseCaseTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+
     @Mock
     private lateinit var mockWeatherRepo: WeatherRepo
 
@@ -29,7 +32,7 @@ class GetWeatherInfoParallelUseCaseTest {
     }
 
     @Test
-    fun `test GetWeatherInfoInParalleUseCase return response in sequence`() = runTest {
+    fun `test GetWeatherInfoInParalleUseCase return response in sequence`() = runTest(testDispatcher) {
         val mockReqRes = mapOf(
             "Kolkata" to WeatherDto(
                 location = Location(
@@ -75,7 +78,7 @@ class GetWeatherInfoParallelUseCaseTest {
             Mockito.`when`(mockWeatherRepo.getWeatherinfo(key))
                 .thenReturn(flowOf(ApiResponse.Success(response = mockReqRes[key]!!)))
         }
-        val sutGetWeatherInfoInParalleUseCase = GetWeatherInfoInParalleUseCase(mockWeatherRepo)
+        val sutGetWeatherInfoInParalleUseCase = GetWeatherInfoInParalleUseCase(mockWeatherRepo,testDispatcher)
         val result = sutGetWeatherInfoInParalleUseCase.invoke(mockReqRes.keys.toList()).toList()
         val domainWrapper = result.first() as DomainWrapper.Success
         Assert.assertEquals(mockReqRes.values.map { it.toWeatherEntity() }, domainWrapper.entity)

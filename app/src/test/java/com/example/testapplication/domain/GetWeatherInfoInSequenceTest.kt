@@ -7,6 +7,7 @@ import com.example.testapplication.data.repo.ApiResponse
 import com.example.testapplication.data.repo.WeatherRepo
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert
 import org.junit.Before
@@ -16,11 +17,11 @@ import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.MockitoAnnotations
 import org.mockito.junit.MockitoJUnitRunner
-import kotlin.system.measureTimeMillis
-import kotlin.time.measureTime
 
 @RunWith(MockitoJUnitRunner::class)
 class GetWeatherInfoInSequenceTest {
+
+    private val testDispatcher = StandardTestDispatcher()
 
     @Mock
     private lateinit var mockWeatherRepo: WeatherRepo
@@ -31,7 +32,7 @@ class GetWeatherInfoInSequenceTest {
     }
 
     @Test
-    fun `test GetWeatherInfoInSequenceUseCase return response in sequence`() = runTest {
+    fun `test GetWeatherInfoInSequenceUseCase return response in sequence`() = runTest(testDispatcher) {
         val mockReqRes = mapOf(
             "Kolkata" to WeatherDto(
                 location = Location(
@@ -78,7 +79,7 @@ class GetWeatherInfoInSequenceTest {
                 .thenReturn(flowOf(ApiResponse.Success(response = mockReqRes[key]!!)))
         }
 
-        val sutGetWeatherInfoInSequenceUseCase = GetWeatherInfoInSequenceUseCase(mockWeatherRepo)
+        val sutGetWeatherInfoInSequenceUseCase = GetWeatherInfoInSequenceUseCase(mockWeatherRepo,testDispatcher)
         val result = sutGetWeatherInfoInSequenceUseCase.invoke(mockReqRes.keys.toList()).toList()
         Assert.assertEquals(3, result.size)
         val resultSet = result.map {

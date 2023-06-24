@@ -1,4 +1,4 @@
-package com.example.testapplication.core
+package com.example.testapplication.core.di
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope

@@ -1,5 +1,6 @@
 package com.example.testapplication.presentation
 
+import com.example.testapplication.core.network.NetworkMonitor
 import com.example.testapplication.domain.DomainWrapper
 import com.example.testapplication.domain.GetWeatherInfoInParalleUseCase
 import com.example.testapplication.domain.GetWeatherInfoInSequenceUseCase
@@ -29,6 +30,9 @@ class WeatherViewmodelTest {
 
     @Mock
     private lateinit var mockGetWeatherinParallUC: GetWeatherInfoInParalleUseCase
+
+
+    private val mockNetworkMonitor: NetworkMonitor = FakeAlwaysConnectedNetworkMonitor()
 
     @Before
     fun setUp() {
@@ -74,7 +78,8 @@ class WeatherViewmodelTest {
             )
         val sutWeatherViewmodel = WeatherViewmodel(
             getWeatherInfoInParalleUseCase = mockGetWeatherinParallUC,
-            getWeatherInfoSequenceUseCase = mockGetWeatherInfoSequenceUC
+            getWeatherInfoSequenceUseCase = mockGetWeatherInfoSequenceUC,
+            networkMonitor = mockNetworkMonitor
         )
         sutWeatherViewmodel.getWeatherInParallel(listOf("Kolkata", "Mumbai", "Pune"))
         advanceUntilIdle()
@@ -159,7 +164,8 @@ class WeatherViewmodelTest {
             )
         val sutWeatherViewmodel = WeatherViewmodel(
             getWeatherInfoInParalleUseCase = mockGetWeatherinParallUC,
-            getWeatherInfoSequenceUseCase = mockGetWeatherInfoSequenceUC
+            getWeatherInfoSequenceUseCase = mockGetWeatherInfoSequenceUC,
+            networkMonitor = mockNetworkMonitor
         )
         sutWeatherViewmodel.getWeatherInSequence(listOf("Kolkata", "Mumbai", "Pune"))
         advanceUntilIdle()
