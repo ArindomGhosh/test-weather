@@ -5,6 +5,7 @@ import com.example.testapplication.data.repo.WeatherRepo
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -14,7 +15,10 @@ class GetWeatherInfoInParalleUseCase(
     suspend operator fun invoke(places: List<String>): Flow<DomainWrapper<out List<WeatherEntity>>> =
         coroutineScope {
             val reqs = places.map {
-                async { weatherRepo.getWeatherinfo(it) }
+                async {
+                    delay(2000)
+                    weatherRepo.getWeatherinfo(it)
+                }
             }
             val weatherEntities = mutableListOf<WeatherEntity>()
             val uiErrorEntites = mutableListOf<ErrorEntity>()
